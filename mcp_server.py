@@ -18,6 +18,15 @@ from outlook_contacts import (
     preview_contacts,
     search_contact_rows,
 )
+from outlook_mail_addresses import (
+    DEFAULT_MAIL_OUTPUT_DIR,
+    MailAddressFilters,
+    collect_mail_folders,
+    export_mail_addresses_snapshot as run_export_mail_addresses_snapshot,
+    get_mail_address as run_get_mail_address,
+    preview_mail_addresses,
+    search_mail_address_rows,
+)
 
 
 mcp = FastMCP("Outlook Contacts Extractor")
@@ -25,6 +34,10 @@ mcp = FastMCP("Outlook Contacts Extractor")
 
 def _output_dir(raw: str | None) -> Path:
     return Path(raw).expanduser().resolve() if raw else DEFAULT_OUTPUT_DIR
+
+
+def _mail_output_dir(raw: str | None) -> Path:
+    return Path(raw).expanduser().resolve() if raw else DEFAULT_MAIL_OUTPUT_DIR
 
 
 @mcp.tool()
@@ -139,6 +152,145 @@ def export_contacts_snapshot(
     )
     return run_export_contacts_snapshot(
         output_dir=_output_dir(output_dir),
+        filters=filters,
+        clean=clean,
+    )
+
+
+@mcp.tool()
+def list_mail_folders(
+    store_name: str | None = None,
+    folder_path: str | None = None,
+    include_subfolders: bool = True,
+    scan_inbox: bool = True,
+    scan_sent_mail: bool = True,
+) -> dict[str, Any]:
+    """List Inbox and Sent Mail folders that can be scanned for discovered addresses."""
+    filters = MailAddressFilters(
+        store_name=store_name,
+        folder_path=folder_path,
+        include_subfolders=include_subfolders,
+        scan_inbox=scan_inbox,
+        scan_sent_mail=scan_sent_mail,
+    )
+    folders = collect_mail_folders(filters)
+    return {"count": len(folders), "folders": folders}
+
+
+@mcp.tool()
+def list_mail_addresses(
+    store_name: str | None = None,
+    folder_path: str | None = None,
+    include_subfolders: bool = True,
+    scan_inbox: bool = True,
+    scan_sent_mail: bool = True,
+    days_back: int | None = None,
+    max_messages: int | None = None,
+    address_scope: str = "correspondents",
+    limit: int = 25,
+    offset: int = 0,
+    include_subject_preview: bool = True,
+    preview_chars: int = 200,
+) -> dict[str, Any]:
+    """List unique addresses discovered from Outlook mail items."""
+    filters = MailAddressFilters(
+        store_name=store_name,
+        folder_path=folder_path,
+        include_subfolders=include_subfolders,
+        scan_inbox=scan_inbox,
+        scan_sent_mail=scan_sent_mail,
+        days_back=days_back,
+        max_messages=max_messages,
+        address_scope=address_scope,
+    )
+    return preview_mail_addresses(
+        filters=filters,
+        limit=limit,
+        offset=offset,
+        include_subject_preview=include_subject_preview,
+        preview_chars=preview_chars,
+    )
+
+
+@mcp.tool()
+def search_mail_addresses(
+    query: str,
+    store_name: str | None = None,
+    folder_path: str | None = None,
+    include_subfolders: bool = True,
+    scan_inbox: bool = True,
+    scan_sent_mail: bool = True,
+    days_back: int | None = None,
+    max_messages: int | None = None,
+    address_scope: str = "correspondents",
+    limit: int = 25,
+) -> dict[str, Any]:
+    """Search unique addresses discovered from Outlook mail items."""
+    filters = MailAddressFilters(
+        store_name=store_name,
+        folder_path=folder_path,
+        include_subfolders=include_subfolders,
+        scan_inbox=scan_inbox,
+        scan_sent_mail=scan_sent_mail,
+        days_back=days_back,
+        max_messages=max_messages,
+        address_scope=address_scope,
+    )
+    return search_mail_address_rows(query, filters, limit=limit)
+
+
+@mcp.tool()
+def get_mail_address(
+    email_address: str,
+    store_name: str | None = None,
+    folder_path: str | None = None,
+    include_subfolders: bool = True,
+    scan_inbox: bool = True,
+    scan_sent_mail: bool = True,
+    days_back: int | None = None,
+    max_messages: int | None = None,
+    address_scope: str = "correspondents",
+) -> dict[str, Any]:
+    """Fetch one discovered mail-derived address by email address."""
+    filters = MailAddressFilters(
+        store_name=store_name,
+        folder_path=folder_path,
+        include_subfolders=include_subfolders,
+        scan_inbox=scan_inbox,
+        scan_sent_mail=scan_sent_mail,
+        days_back=days_back,
+        max_messages=max_messages,
+        address_scope=address_scope,
+    )
+    return run_get_mail_address(email_address=email_address, filters=filters)
+
+
+@mcp.tool()
+def export_mail_addresses_snapshot(
+    output_dir: str | None = None,
+    clean: bool = False,
+    store_name: str | None = None,
+    folder_path: str | None = None,
+    include_subfolders: bool = True,
+    scan_inbox: bool = True,
+    scan_sent_mail: bool = True,
+    days_back: int | None = None,
+    max_messages: int | None = None,
+    address_scope: str = "correspondents",
+) -> dict[str, Any]:
+    """Export unique addresses discovered from Inbox and Sent Mail folders."""
+    filters = MailAddressFilters(
+        store_name=store_name,
+        folder_path=folder_path,
+        include_subfolders=include_subfolders,
+        scan_inbox=scan_inbox,
+        scan_sent_mail=scan_sent_mail,
+        days_back=days_back,
+        max_messages=max_messages,
+        address_scope=address_scope,
+    )
+    return run_export_mail_addresses_snapshot(
+        output_dir=_mail_output_dir(output_dir),
         filters=filters,
         clean=clean,
     )

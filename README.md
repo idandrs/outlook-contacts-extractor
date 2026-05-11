@@ -1,9 +1,11 @@
 # Outlook Contacts Extractor
 
-Local Outlook contacts export and analysis tools for Windows 11.
+Local Outlook contacts and mail-derived address export tools for Windows 11.
 
-This project exports your Outlook contacts into:
+This project exports:
 
+- Saved Outlook contacts from the Contacts folder tree
+- Email addresses discovered from incoming and outgoing mail
 - JSON for bulk analysis
 - CSV for import into Excel or other tools
 - XLSX for direct use in Excel
@@ -11,7 +13,7 @@ This project exports your Outlook contacts into:
 
 ## What This Uses
 
-The exporter talks to Outlook through the Windows COM automation interface exposed by classic Outlook for Windows.
+The exporters talk to Outlook through the Windows COM automation interface exposed by classic Outlook for Windows.
 
 It does not scrape mailboxes directly and it does not need Microsoft Graph.
 
@@ -31,8 +33,10 @@ Before running the exporter:
 ## Files
 
 - `scripts/bootstrap.ps1`: create `.venv` and install dependencies on Windows
-- `scripts/export_contacts.py`: export Outlook contacts to JSON, CSV, XLSX, and summary files
-- `outlook_contacts.py`: shared Outlook COM access and export logic
+- `scripts/export_contacts.py`: export saved Outlook contacts to JSON, CSV, XLSX, and summary files
+- `scripts/export_addresses_from_mail.py`: mine addresses from Inbox and Sent Mail and export JSON, CSV, XLSX, and summary files
+- `outlook_contacts.py`: saved-contact export logic
+- `outlook_mail_addresses.py`: mail-derived address mining logic
 - `mcp_server.py`: local stdio MCP server for Codex CLI
 
 ## Setup
@@ -59,6 +63,40 @@ Default output goes to:
 - `output\latest\contacts.xlsx`
 - `output\latest\manifest.json`
 - `output\latest\summary.md`
+
+## Export Addresses From Mail
+
+This scans Outlook mail folders and builds a deduplicated address sheet even for people who are not saved in Contacts.
+
+By default it uses `address-scope correspondents`, which means:
+
+- incoming mail contributes the sender address
+- outgoing mail contributes recipient addresses
+
+If you want every sender and recipient address found in both directions, use `--address-scope all-participants`.
+
+```powershell
+cd "$HOME\Personal\outlook contacts extractor"
+.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py
+```
+
+Default output goes to:
+
+- `output\mail-addresses\latest\mail_addresses.json`
+- `output\mail-addresses\latest\mail_addresses.csv`
+- `output\mail-addresses\latest\mail_addresses.xlsx`
+- `output\mail-addresses\latest\manifest.json`
+- `output\mail-addresses\latest\summary.md`
+
+Useful examples:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --days-back 365
+.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --roots inbox
+.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --address-scope all-participants
+.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --max-messages 5000
+.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --folder-path "Inbox/Customers"
+```
 
 ## MCP For Codex CLI
 
@@ -87,6 +125,11 @@ The server exposes tools such as:
 - `search_contacts`
 - `get_contact`
 - `export_contacts_snapshot`
+- `list_mail_folders`
+- `list_mail_addresses`
+- `search_mail_addresses`
+- `get_mail_address`
+- `export_mail_addresses_snapshot`
 
 ## Useful Options
 
@@ -114,6 +157,8 @@ Recreate the export directory first:
 .\.venv\Scripts\python.exe .\scripts\export_contacts.py --clean
 ```
 
+Mail-derived export defaults to Inbox and Sent Mail plus their subfolders. Use `--no-subfolders` if you want just the roots.
+
 ## Output Schema
 
 The main export includes fields such as:
@@ -140,3 +185,5 @@ The main export includes fields such as:
 - Outlook COM access depends on the local Windows profile and whatever stores that Outlook profile can open.
 - Shared or delegated contacts may or may not appear depending on how they are mounted in your Outlook profile.
 - Distribution lists are exported as rows with `item_type = distribution_list` and best-effort member expansion.
+- Mail-derived address export resolves SMTP addresses where Outlook exposes them. Some internal Exchange entries may still be skipped if Outlook does not return a usable SMTP address.
+- Scanning large mailboxes can take time. Use `--days-back`, `--max-messages`, `--roots`, or `--folder-path` to narrow the scan.
