@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from outlook_contacts import OutlookAccessError  # noqa: E402
 from outlook_mail_addresses import (  # noqa: E402
+    DEFAULT_MAIL_DAYS_BACK,
     DEFAULT_MAIL_OUTPUT_DIR,
     MailAddressFilters,
     export_mail_addresses_snapshot,
@@ -43,7 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--days-back",
         type=int,
-        default=None,
+        default=DEFAULT_MAIL_DAYS_BACK,
         help="Only include mail from the last N days",
     )
     parser.add_argument(

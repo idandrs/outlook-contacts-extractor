@@ -2,6 +2,8 @@
 
 Local Outlook contacts and mail-derived address export tools for Windows 11.
 
+If you want a step-by-step guide for a Windows user, see [WINDOWS_11_GUIDE.md](./WINDOWS_11_GUIDE.md).
+
 This project exports:
 
 - Saved Outlook contacts from the Contacts folder tree
@@ -35,6 +37,7 @@ Before running the exporter:
 - `scripts/bootstrap.ps1`: create `.venv` and install dependencies on Windows
 - `scripts/export_contacts.py`: export saved Outlook contacts to JSON, CSV, XLSX, and summary files
 - `scripts/export_addresses_from_mail.py`: mine addresses from Inbox and Sent Mail and export JSON, CSV, XLSX, and summary files
+- `scripts/run_default_mail_export.ps1`: run the default mail export with no parameters
 - `outlook_contacts.py`: saved-contact export logic
 - `outlook_mail_addresses.py`: mail-derived address mining logic
 - `mcp_server.py`: local stdio MCP server for Codex CLI
@@ -68,16 +71,25 @@ Default output goes to:
 
 This scans Outlook mail folders and builds a deduplicated address sheet even for people who are not saved in Contacts.
 
-By default it uses `address-scope correspondents`, which means:
+The default no-parameter behavior is:
+
+- last `365` days of mail
+- both `Inbox` and `Sent Mail`
+- includes subfolders
+- `address-scope correspondents`
+
+That means:
 
 - incoming mail contributes the sender address
 - outgoing mail contributes recipient addresses
 
 If you want every sender and recipient address found in both directions, use `--address-scope all-participants`.
 
+Recommended no-parameter runner:
+
 ```powershell
 cd "$HOME\Personal\outlook contacts extractor"
-.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py
+.\scripts\run_default_mail_export.ps1
 ```
 
 Default output goes to:
@@ -91,7 +103,7 @@ Default output goes to:
 Useful examples:
 
 ```powershell
-.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --days-back 365
+.\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py
 .\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --roots inbox
 .\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --address-scope all-participants
 .\.venv\Scripts\python.exe .\scripts\export_addresses_from_mail.py --max-messages 5000

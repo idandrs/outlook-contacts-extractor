@@ -21,6 +21,7 @@ from outlook_contacts import (
 
 
 DEFAULT_MAIL_OUTPUT_DIR = PROJECT_ROOT / "output" / "mail-addresses" / "latest"
+DEFAULT_MAIL_DAYS_BACK = 365
 
 OL_FOLDER_INBOX = 6
 OL_FOLDER_SENT_MAIL = 5
@@ -53,7 +54,7 @@ class MailAddressFilters:
     include_subfolders: bool = True
     scan_inbox: bool = True
     scan_sent_mail: bool = True
-    days_back: int | None = None
+    days_back: int | None = DEFAULT_MAIL_DAYS_BACK
     max_messages: int | None = None
     address_scope: str = "correspondents"
 
